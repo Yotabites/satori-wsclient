@@ -17,12 +17,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.yotabites.stage.origin.sample;
+package com.example.stage.origin.sample;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import com.satori.rtm.SubscriptionListener;
+import com.satori.rtm.model.AnyJson;
+import com.satori.rtm.model.SubscriptionData;
 import com.streamsets.pipeline.api.ConfigDef;
 import com.streamsets.pipeline.api.ConfigGroups;
 import com.streamsets.pipeline.api.ExecutionMode;
+import com.streamsets.pipeline.api.Field;
 import com.streamsets.pipeline.api.GenerateResourceBundle;
+import com.streamsets.pipeline.api.Record;
 import com.streamsets.pipeline.api.StageDef;
 
 @StageDef(
@@ -36,22 +44,74 @@ import com.streamsets.pipeline.api.StageDef;
 )
 @ConfigGroups(value = Groups.class)
 @GenerateResourceBundle
-public class SampleDSource extends SampleSource {
+public class SampleDSource extends SampleSource implements SubscriptionListener{
 
-  @ConfigDef(
-      required = true,
-      type = ConfigDef.Type.STRING,
-      defaultValue = "default",
-      label = "Sample Config",
-      displayPosition = 10,
-      group = "SAMPLE"
-  )
-  public String config;
+	@ConfigDef(
+		    required = true,
+		    type = ConfigDef.Type.STRING,
+		    defaultValue = "wss://open-data.api.satori.com",
+		    label = "EndPointKey",
+		    description = "",
+		    displayPosition = 10,
+		    group = "SAMPLE"
+		)
+		public String endpoint;
 
-  /** {@inheritDoc} */
-  @Override
-  public String getConfig() {
-    return config;
-  }
+		/** {@inheritDoc} */
+	    @Override
+		public String getEndPoint() {
+		  return endpoint;
+		}
+
+		@ConfigDef(
+		    required = true,
+		    type = ConfigDef.Type.STRING,
+		    defaultValue = "",
+		    label = "Appkey",
+		    description = "dEe74d6a44CFAD4AaFCBCc903Fe95fAb",
+		    displayPosition = 20,
+		    group = "SAMPLE"
+		)
+		public String appkey;
+
+		/** {@inheritDoc} */
+		@Override
+		public String getAppKey() {
+		  return appkey;
+		}
+
+		@ConfigDef(
+		    required = true,
+		    type = ConfigDef.Type.STRING,
+		    defaultValue = "cryptocurrency-market-data",
+		    label = "Channel",
+		    description = " ",
+		    displayPosition = 20,
+		    group = "SAMPLE"
+		)
+		public String channel ;
+
+		/** {@inheritDoc} */
+		 @Override
+		public String getChannel() {
+		  return channel;
+
+}
+		 @Override
+			public void onSubscriptionData(SubscriptionData data) {
+
+				for (AnyJson json : data.getMessages()) {
+
+					Record record = getContext().createRecord("some-id::" + e.nextSourceOffset);
+					Map<String, Field> map = new HashMap<>();
+					map.put("fieldName", Field.create(json.toString()));
+					record.set(Field.create(map));
+					batchMaker.addRecord(record);
+					++e.nextSourceOffset;
+
+				}
+
+			}
+
 
 }

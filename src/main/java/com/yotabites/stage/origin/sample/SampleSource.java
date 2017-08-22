@@ -17,9 +17,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.yotabites.stage.origin.sample;
+package com.example.stage.origin.sample;
 
-import com.yotabites.stage.lib.sample.Errors;
+import com.example.stage.lib.sample.Errors;
 import com.streamsets.pipeline.api.BatchMaker;
 import com.streamsets.pipeline.api.Field;
 import com.streamsets.pipeline.api.Record;
@@ -39,24 +39,28 @@ public abstract class SampleSource extends BaseSource {
   /**
    * Gives access to the UI configuration of the stage provided by the {@link SampleDSource} class.
    */
-  public abstract String getConfig();
+	public abstract String getEndPoint();
 
-  @Override
-  protected List<ConfigIssue> init() {
-    // Validate configuration values and open any required resources.
-    List<ConfigIssue> issues = super.init();
+	public abstract String getAppKey();
 
-    if (getConfig().equals("invalidValue")) {
-      issues.add(
-          getContext().createConfigIssue(
-              Groups.SAMPLE.name(), "config", Errors.SAMPLE_00, "Here's what's wrong..."
-          )
-      );
-    }
+	public abstract String getChannel();
 
-    // If issues is not empty, the UI will inform the user of each configuration issue in the list.
-    return issues;
-  }
+	public static String jsonString;
+
+	@Override
+	protected List<ConfigIssue> init() {
+		// Validate configuration values and open any required resources.
+		List<ConfigIssue> issues = super.init();
+
+		if (getEndPoint().isEmpty() || getAppKey().isEmpty() || getChannel().isEmpty()) {
+			issues.add(getContext().createConfigIssue(Groups.SAMPLE.name(), "config", Errors.SAMPLE_00,
+					"Here's what's wrong..."));
+		}
+
+		// If issues is not empty, the UI will inform the user of each
+		// configuration issue in the list.
+		return issues;
+	}
 
   /** {@inheritDoc} */
   @Override
