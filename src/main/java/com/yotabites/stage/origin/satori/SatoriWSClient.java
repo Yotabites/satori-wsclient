@@ -3,10 +3,14 @@ package com.yotabites.stage.origin.satori;
 import com.satori.rtm.*;
 import com.satori.rtm.model.*;
 import com.streamsets.pipeline.api.*;
-import com.streamsets.pipeline.api.base.BaseSource;
+import com.streamsets.pipeline.api.base.BasePushSource;
 import com.yotabites.stage.origin.satori.Groups;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Created by yesh on 8/22/17.
@@ -23,14 +27,10 @@ import java.util.*;
 )
 @ConfigGroups(value = Groups.class)
 @GenerateResourceBundle
-public class SatoriWSClient extends BaseSource {
+public class SatoriWSClient extends BasePushSource   {
 
     private Queue<AnyJson> messageQueue = new LinkedList<AnyJson>();
     private RtmClient client;
-    private String lastSourceOffset;
-    private int maxBatchSize;
-    private BatchMaker batchMaker;
-    private long nextSourceOffset = 0;
     @ConfigDef(
             required = true,
             type = ConfigDef.Type.STRING,
@@ -65,8 +65,15 @@ public class SatoriWSClient extends BaseSource {
             group = "Satori"
     )
     public String channel;
-
-
+    @ConfigDef(
+    	     required = false,
+    	     type = ConfigDef.Type.NUMBER,
+    	     defaultValue = "1",
+    	     label = "Thread Count",
+    	     displayPosition = 10,
+    	     group = "Satori"
+    	)
+    	public int threadCount;
     @Override
     protected List<ConfigIssue> init() {
         client = new RtmClientBuilder(endpoint, appkey)
@@ -79,40 +86,58 @@ public class SatoriWSClient extends BaseSource {
             public void onSubscriptionData(SubscriptionData data) {
                 for (AnyJson json : data.getMessages()) {
                     messageQueue.add(json);
+                    new RecordGeneratorThread(messageQueue);
                 }
             }
         };
         client.createSubscription(channel, SubscriptionMode.SIMPLE, listener);
         client.start();
+       
         return super.init();
     }
 
-
-    @Override
-    public String produce(String lastSourceOffset, int maxBatchSize, BatchMaker batchMaker) throws StageException {
-        long nextSourceOffset = 0;
-        if (lastSourceOffset != null) {
-            nextSourceOffset = Long.parseLong(lastSourceOffset);
-        }
-        if (messageQueue.size() != 0) {
-            for (AnyJson json : messageQueue) {
-                Record record = getContext().createRecord("some-id::" + nextSourceOffset);
-                Map<String, Field> map = new HashMap<>();
-                map.put("fieldName", Field.create(json.toString()));
-                record.set(Field.create(map));
-                batchMaker.addRecord(record);
-                ++nextSourceOffset;
-                messageQueue.remove();
-            }
-        }
-
-        return String.valueOf(nextSourceOffset);
-    }
 
     @Override
     public void destroy() {
         client.stop();
         super.destroy();
     }
+
+
+	@Override
+	public int getNumberOfThreads() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+
+	@Override
+	public void produce(Map<String, String> arg0, int arg1) throws StageException {
+		
+		ExecutorService executor = Executors.newFixedThreadPool(threadCount); 
+		List<Future<Runnable>> futures = new ArrayList<>(threadCount);
+		        
+		// Start the threads
+		for(int i = 0; i < threadCount; i++) {
+		      Future future = executor.submit(new RecordGeneratorThread(i));
+		      futures.add(future);
+		}
+		        
+		// Wait for execution end
+		for(Future<Runnable> f : futures) {
+		      try {
+		          f.get();
+		      } catch (InterruptedException|ExecutionException e) {
+		         
+		      }
+		      finally {
+		    	  executor.shutdownNow();
+			}
+		      
+		}
+		
+		// TODO Auto-generated method stub
+		
+	}
 
 }
