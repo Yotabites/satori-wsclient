@@ -105,14 +105,14 @@ public class SatoriWSClient extends BaseSource {
               while(!deque.isEmpty())
               {
                 Record record = getContext().createRecord("some-id::" + nextSourceOffset);
-                Map<String, Field> map = new HashMap<>();
+                List<Field> l=new ArrayList<Field>();
                 try {
-					map.put("fieldName", Field.create(deque.take().toString()));
+					l.add(Field.create(deque.take().toString()));
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-                record.set(Field.create(map));
+                record.set(Field.create(l));
                 batchMaker.addRecord(record);
                 ++nextSourceOffset;
               }
