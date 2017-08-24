@@ -7,6 +7,10 @@ import com.streamsets.pipeline.api.base.BaseSource;
 import com.yotabites.stage.origin.satori.Groups;
 
 import java.util.*;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by yesh on 8/22/17.
@@ -25,12 +29,11 @@ import java.util.*;
 @GenerateResourceBundle
 public class SatoriWSClient extends BaseSource {
 
-    private Queue<AnyJson> messageQueue = new LinkedList<AnyJson>();
+    //private Queue<AnyJson> messageQueue = new LinkedList<AnyJson>();
+	BlockingQueue<AnyJson> deque = new LinkedBlockingQueue<AnyJson>();
+  
     private RtmClient client;
-    private String lastSourceOffset;
-    private int maxBatchSize;
-    private BatchMaker batchMaker;
-    private long nextSourceOffset = 0;
+   
     @ConfigDef(
             required = true,
             type = ConfigDef.Type.STRING,
@@ -78,7 +81,12 @@ public class SatoriWSClient extends BaseSource {
             @Override
             public void onSubscriptionData(SubscriptionData data) {
                 for (AnyJson json : data.getMessages()) {
-                    messageQueue.add(json);
+                    try {
+						deque.put(json);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
                 }
             }
         };
@@ -90,22 +98,25 @@ public class SatoriWSClient extends BaseSource {
 
     @Override
     public String produce(String lastSourceOffset, int maxBatchSize, BatchMaker batchMaker) throws StageException {
-        long nextSourceOffset = 0;
+        int nextSourceOffset = 0;
         if (lastSourceOffset != null) {
-            nextSourceOffset = Long.parseLong(lastSourceOffset);
+            nextSourceOffset = Integer.parseInt(lastSourceOffset);
         }
-        if (messageQueue.size() != 0) {
-            for (AnyJson json : messageQueue) {
+              while(!deque.isEmpty())
+              {
                 Record record = getContext().createRecord("some-id::" + nextSourceOffset);
                 Map<String, Field> map = new HashMap<>();
-                map.put("fieldName", Field.create(json.toString()));
+                try {
+					map.put("fieldName", Field.create(deque.take().toString()));
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
                 record.set(Field.create(map));
                 batchMaker.addRecord(record);
                 ++nextSourceOffset;
-                messageQueue.remove();
-            }
-        }
-
+              }
+       
         return String.valueOf(nextSourceOffset);
     }
 
