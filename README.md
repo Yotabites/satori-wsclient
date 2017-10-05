@@ -12,7 +12,7 @@ They have variety of [channels](https://www.satori.com/opendata/channels) with l
 * this will create a ```satori-wsclient-1.0-SNAPSHOT.tar.gz``` whcih you need to copy to ```STREAMSETS_DATACOLLECTOR-2.6.0.0/user-libs```
 * restart streamsets after copying. you should see ```SatoriWs``` in origins along with other origins as following snippet 
 
-[![SatoriWS](https://github.com/Yotabites/satori-wsclient/blob/master/images/satori1.png  "SatoriWS")]
+![SatoriWS](https://github.com/Yotabites/satori-wsclient/blob/master/images/satori1.png  "SatoriWS")
 
 
 ### Usage:
