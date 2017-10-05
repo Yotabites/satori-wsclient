@@ -1,5 +1,4 @@
-#satori-wsclient
-
+# satori-wsclient
 [Satori](https://www.satori.com/) is a fully managed platform as a service that lets you connect, process and react to streaming live data at ultra-low latency, powering a new class of Internet-scale apps. 
 They have variety of [channels](https://www.satori.com/opendata/channels) with live streaming data. For processing data Satori provides SDK's to connect and to pull data.
 
@@ -32,5 +31,4 @@ They have variety of [channels](https://www.satori.com/opendata/channels) with l
 
 
 **Try it out and let us know your feedback for any improvements/feature requests**
-
 
