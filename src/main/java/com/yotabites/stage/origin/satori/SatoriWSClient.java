@@ -30,10 +30,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class SatoriWSClient extends BaseSource {
 
     //private Queue<AnyJson> messageQueue = new LinkedList<AnyJson>();
-	BlockingQueue<AnyJson> deque = new LinkedBlockingQueue<AnyJson>();
-  
+    BlockingQueue<AnyJson> deque = new LinkedBlockingQueue<AnyJson>();
+
     private RtmClient client;
-   
+
     @ConfigDef(
             required = true,
             type = ConfigDef.Type.STRING,
@@ -78,20 +78,32 @@ public class SatoriWSClient extends BaseSource {
                 })
                 .build();
         SubscriptionAdapter listener = new SubscriptionAdapter() {
+
+            @Override
+            public void onEnterSubscribed(SubscribeRequest request, SubscribeReply reply) {
+
+                super.onEnterSubscribed(request, reply);
+            }
+
             @Override
             public void onSubscriptionData(SubscriptionData data) {
                 for (AnyJson json : data.getMessages()) {
                     try {
-						deque.put(json);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+                        deque.put(json);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         };
         client.createSubscription(channel, SubscriptionMode.SIMPLE, listener);
         client.start();
+        while (!client.isConnected())
+            try {
+                Thread.sleep(1500l);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         return super.init();
     }
 
@@ -102,21 +114,17 @@ public class SatoriWSClient extends BaseSource {
         if (lastSourceOffset != null) {
             nextSourceOffset = Integer.parseInt(lastSourceOffset);
         }
-              while(!deque.isEmpty())
-              {
-                Record record = getContext().createRecord("some-id::" + nextSourceOffset);
-                List<Field> l=new ArrayList<Field>();
-                try {
-					l.add(Field.create(deque.take().toString()));
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-                record.set(Field.create(l));
+        while (!deque.isEmpty()) {
+            Record record = getContext().createRecord("some-id::" + nextSourceOffset);
+
+            try {
+                record.set(Field.create(deque.take().toString()));
                 batchMaker.addRecord(record);
-                ++nextSourceOffset;
-              }
-       
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            ++nextSourceOffset;
+        }
         return String.valueOf(nextSourceOffset);
     }
 
