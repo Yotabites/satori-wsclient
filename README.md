@@ -29,6 +29,23 @@ They have variety of [channels](https://www.satori.com/opendata/channels) with l
 ![SatoriWS Pipeline](https://github.com/Yotabites/satori-wsclient/blob/master/images/satori3.png  "SatoriWS Pipeline")
 
 
+## Converting the String Output of Satori-WSClient to Json Format using Java Script Evaluator
+
+### Instructions to Create a Java Script Evaluator:
+* In the processors options select the Java Script Evaluator
+* In the Java Script Evaluator's Configuration options,under the Javascript Window paste the following code 
+
+  ```records[i].value=JSON.parse(records[i].value)```
+
+* Connect the Satori-WSClient to Javascript Evaluator.
+
+* Create any Destination and connect the Javascript Evaluator to the Destination.
+
+* Now check the preview.You should be able to see the output similar to the one shown on the picture below.
+
+![SatoriWS](https://github.com/Yotabites/satori-wsclient/blob/master/images/satori4.png  "SatoriWS")
+
+
 
 **Try it out and let us know your feedback for any improvements/feature requests**
 
