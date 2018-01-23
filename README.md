@@ -46,6 +46,24 @@ They have variety of [channels](https://www.satori.com/opendata/channels) with l
 ![SatoriWS](https://github.com/Yotabites/satori-wsclient/blob/master/images/satori4.png  "SatoriWS")
 
 
+Sometimes you might experience the following error:
+
+```
+java.security.AccessControlException: access denied ("java.net.SocketPermission" "open-data.api.satori.com" "resolve")
+```
+
+We need to edit the SDC security policy to handle this exception. Open `~/streamsets-datacollector-3.1.0.0/etc/sdc-security.policy` and add the following line:
+
+```
+// user-defined external directory
+grant codebase "file://${sdc.dist.dir}/user-libs/satori-wsclient/-" {
+ permission java.security.AllPermission;
+};
+```
+
+Restart SDC after editing the security policy file and start your pipeline.
+
+```
 
 **Try it out and let us know your feedback for any improvements/feature requests**
 
