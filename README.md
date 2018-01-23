@@ -63,7 +63,6 @@ grant codebase "file://${sdc.dist.dir}/user-libs/satori-wsclient/-" {
 
 Restart SDC after editing the security policy file and start your pipeline.
 
-```
 
 **Try it out and let us know your feedback for any improvements/feature requests**
 
